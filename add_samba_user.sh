@@ -20,5 +20,13 @@ if ! id "$username" &>/dev/null; then
   useradd -M -s /usr/sbin/nologin "$username"
 fi
 
-# Samba-User anlegen (Passwort kommt per STDIN)
-smbpasswd -a "$username"
+# Lese zwei Passwörter von STDIN
+read -r password1
+read -r password2
+
+if [ "$password1" != "$password2" ]; then
+  echo "Passwörter stimmen nicht überein!" >&2
+  exit 3
+fi
+
+echo -e "$password1\n$password2" | smbpasswd -s -a "$username"
