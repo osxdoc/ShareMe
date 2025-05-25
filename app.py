@@ -206,7 +206,7 @@ def users_list():
         
     try:
         # Get Samba users using pdbedit
-        result = subprocess.run(['pdbedit', '-L', '-v'], capture_output=True, text=True)
+        result = subprocess.run(['/usr/bin/pdbedit', '-L', '-v'], capture_output=True, text=True)
         output = result.stdout
         
         # Parse the output to extract user information
@@ -245,7 +245,7 @@ def add_user():
         
         try:
             # Add user to Samba using smbpasswd
-            process = subprocess.Popen(['smbpasswd', '-a', username], 
+            process = subprocess.Popen(['/usr/bin/smbpasswd', '-a', username], 
                                       stdin=subprocess.PIPE, 
                                       stdout=subprocess.PIPE,
                                       stderr=subprocess.PIPE,
@@ -273,7 +273,7 @@ def delete_user(username):
         
     try:
         # Delete user from Samba using smbpasswd
-        result = subprocess.run(['smbpasswd', '-x', username], capture_output=True, text=True)
+        result = subprocess.run(['/usr/bin/smbpasswd', '-x', username], capture_output=True, text=True)
         
         if result.returncode == 0:
             flash(f'User {username} deleted successfully')
@@ -296,7 +296,7 @@ def reset_password(username):
         
         try:
             # Reset user password using smbpasswd
-            process = subprocess.Popen(['smbpasswd', username], 
+            process = subprocess.Popen(['/usr/bin/smbpasswd', username], 
                                       stdin=subprocess.PIPE, 
                                       stdout=subprocess.PIPE,
                                       stderr=subprocess.PIPE,
