@@ -186,7 +186,13 @@ python3 -m venv venv || { print_error "Fehler beim Erstellen der virtuellen Umge
 
 # 7. Installieren der Python-Abhängigkeiten
 print_message "Installiere Python-Abhängigkeiten..."
-"$INSTALL_DIR/venv/bin/pip" install -r requirements.txt || {
+"$INSTALL_DIR/venv/bin/pip" install --upgrade pip || {
+    print_warning "Fehler beim Aktualisieren von pip. Fahre trotzdem fort...";
+}
+
+# Stelle sicher, dass die richtigen Versionen installiert werden
+print_message "Installiere kompatible Paketversionen..."
+"$INSTALL_DIR/venv/bin/pip" install Flask==2.0.1 Werkzeug==2.0.1 Flask-WTF==0.15.1 Flask-Login==0.5.0 python-ldap==3.3.1 gunicorn==20.1.0 || {
     print_error "Fehler beim Installieren der Python-Abhängigkeiten.";
     exit 1;
 }
@@ -292,14 +298,24 @@ if command -v ufw &> /dev/null; then
     fi
 fi
 
-# 18. Erfolgreiche Installation
-print_message "Installation abgeschlossen!"
-if [ "$USE_NGINX" = true ]; then
-    print_message "ShareMe wurde erfolgreich installiert und läuft unter http://$(hostname -I | awk '{print $1}')"
+# 18. Überprüfen, ob der Dienst erfolgreich gestartet wurde
+print_message "Warte auf Dienststart..."
+sleep 5
+
+if systemctl is-active $SERVICE_NAME &>/dev/null; then
+    print_message "Installation erfolgreich abgeschlossen!"
+    if [ "$USE_NGINX" = true ]; then
+        print_message "ShareMe wurde erfolgreich installiert und läuft unter http://$(hostname -I | awk '{print $1}')"
+    else
+        print_message "ShareMe wurde erfolgreich installiert und läuft unter http://$(hostname -I | awk '{print $1}'):$APP_PORT"
+    fi
+    print_message "Standard-Anmeldedaten: admin / admin"
+    print_message "Bitte ändern Sie das Passwort nach der ersten Anmeldung!"
 else
-    print_message "ShareMe wurde erfolgreich installiert und läuft unter http://$(hostname -I | awk '{print $1}'):$APP_PORT"
+    print_warning "Der Dienst konnte nicht gestartet werden. Überprüfen Sie die Logs mit:"
+    print_message "sudo journalctl -u $SERVICE_NAME"
+    print_message "Oder führen Sie das Reparaturskript aus:"
+    print_message "sudo ./fix_installation.sh"
 fi
-print_message "Standard-Anmeldedaten: admin / admin"
-print_message "Bitte ändern Sie das Passwort nach der ersten Anmeldung!"
 
 exit 0
