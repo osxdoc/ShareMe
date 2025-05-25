@@ -282,9 +282,11 @@ else
     journalctl -u $SERVICE_NAME -n 20 --no-pager
 fi
 
-print_header "10. Geprüfte Templates aus dem Repository kopieren"
+print_header "10. Geprüfte Templates und app.py aus dem Repository kopieren"
 SOURCE_TEMPLATES="./templates"
 TARGET_TEMPLATES="$INSTALL_DIR/templates"
+SOURCE_APP="./app.py"
+TARGET_APP="$INSTALL_DIR/app.py"
 
 if [ -d "$SOURCE_TEMPLATES" ]; then
     print_message "Kopiere base.html und login.html aus dem Repository..."
@@ -295,6 +297,16 @@ if [ -d "$SOURCE_TEMPLATES" ]; then
     print_message "Templates base.html und login.html wurden erfolgreich überschrieben und Berechtigungen gesetzt."
 else
     print_warning "Quell-Templates nicht gefunden: $SOURCE_TEMPLATES"
+fi
+
+if [ -f "$SOURCE_APP" ]; then
+    print_message "Kopiere app.py aus dem Repository..."
+    cp -v "$SOURCE_APP" "$TARGET_APP"
+    chown $APP_USER:$APP_GROUP "$TARGET_APP"
+    chmod 755 "$TARGET_APP"
+    print_message "app.py wurde erfolgreich überschrieben und Berechtigungen gesetzt."
+else
+    print_warning "Quell-app.py nicht gefunden: $SOURCE_APP"
 fi
 
 print_header "Reparatur abgeschlossen"
