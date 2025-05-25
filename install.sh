@@ -211,7 +211,12 @@ print_message "Überprüfe installierte Versionen..."
     print_warning "Konnte installierte Versionen nicht anzeigen.";
 }
 
-# 8. Installieren von Gunicorn
+# 8. Installieren von Samba-Tools
+print_message "Installiere Samba-Tools..."
+sudo apt-get update
+sudo apt-get install -y samba samba-common-bin
+
+# 9. Installieren von Gunicorn
 print_message "Installiere Gunicorn..."
 "$INSTALL_DIR/venv/bin/pip" install gunicorn || {
     print_error "Fehler beim Installieren von Gunicorn.";
