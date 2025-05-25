@@ -192,9 +192,23 @@ print_message "Installiere Python-Abhängigkeiten..."
 
 # Stelle sicher, dass die richtigen Versionen installiert werden
 print_message "Installiere kompatible Paketversionen..."
-"$INSTALL_DIR/venv/bin/pip" install Flask==2.0.1 Werkzeug==2.0.1 Flask-WTF==0.15.1 Flask-Login==0.5.0 python-ldap==3.3.1 gunicorn==20.1.0 || {
+
+# Installiere zuerst Werkzeug, um sicherzustellen, dass die richtige Version verwendet wird
+"$INSTALL_DIR/venv/bin/pip" install Werkzeug==2.0.1 || {
+    print_error "Fehler beim Installieren von Werkzeug.";
+    exit 1;
+}
+
+# Dann installiere Flask und die anderen Abhängigkeiten
+"$INSTALL_DIR/venv/bin/pip" install Flask==2.0.1 Flask-WTF==0.15.1 Flask-Login==0.5.0 python-ldap==3.3.1 gunicorn==20.1.0 || {
     print_error "Fehler beim Installieren der Python-Abhängigkeiten.";
     exit 1;
+}
+
+# Überprüfe die installierten Versionen
+print_message "Überprüfe installierte Versionen..."
+"$INSTALL_DIR/venv/bin/pip" list | grep -E 'Flask|Werkzeug' || {
+    print_warning "Konnte installierte Versionen nicht anzeigen.";
 }
 
 # 8. Installieren von Gunicorn
@@ -237,7 +251,7 @@ User=$APP_USER
 Group=$APP_GROUP
 WorkingDirectory=$INSTALL_DIR
 Environment="PATH=$INSTALL_DIR/venv/bin"
-ExecStart=$INSTALL_DIR/venv/bin/gunicorn -w 4 -b 0.0.0.0:$APP_PORT app:app
+ExecStart=$INSTALL_DIR/venv/bin/python -m gunicorn -w 4 -b 0.0.0.0:$APP_PORT app:app
 Restart=always
 
 [Install]
