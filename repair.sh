@@ -200,34 +200,26 @@ else
     if [ -f "$LOGIN_TEMPLATE" ]; then
         print_message "Überprüfe login.html..."
         
-        # Überprüfen, ob login.html einen content-Block definiert
-        if grep -q "{% block content %}" "$LOGIN_TEMPLATE"; then
-            print_message "login.html enthält einen content-Block."
-            
-            # Überprüfen, ob login.html base.html erweitert
+        # Prüfe, ob login.html einen content-Block oder einen unauthenticated_content-Block definiert
+        if grep -q "{% block content %}" "$LOGIN_TEMPLATE" || grep -q "{% block unauthenticated_content %}" "$LOGIN_TEMPLATE"; then
+            print_message "login.html enthält einen gültigen Block (content oder unauthenticated_content). Keine Reparatur nötig."
+            # Prüfe, ob extends-Anweisung vorhanden ist
             if grep -q "{% extends 'base.html' %}" "$LOGIN_TEMPLATE"; then
                 print_message "login.html erweitert base.html korrekt."
             else
                 print_warning "login.html erweitert base.html nicht. Füge extends-Anweisung hinzu..."
-                
-                # Füge extends-Anweisung am Anfang der Datei hinzu
                 TMP_FILE=$(mktemp)
                 echo "{% extends 'base.html' %}" > "$TMP_FILE"
                 cat "$LOGIN_TEMPLATE" >> "$TMP_FILE"
                 mv "$TMP_FILE" "$LOGIN_TEMPLATE"
                 chown $APP_USER:$APP_GROUP "$LOGIN_TEMPLATE"
                 chmod 644 "$LOGIN_TEMPLATE"
-                
                 print_message "extends-Anweisung zu login.html hinzugefügt."
             fi
         else
-            print_warning "login.html enthält keinen content-Block. Füge content-Block hinzu..."
-            
-            # Füge content-Block hinzu
+            print_warning "login.html enthält weder content- noch unauthenticated_content-Block. Füge content-Block hinzu..."
             TMP_FILE=$(mktemp)
-            
             if grep -q "{% extends 'base.html' %}" "$LOGIN_TEMPLATE"; then
-                # Wenn extends vorhanden ist, füge content-Block nach extends hinzu
                 awk '
                 /{% extends .base.html. %}/ {
                     print;
@@ -241,18 +233,15 @@ else
                 }
                 ' "$LOGIN_TEMPLATE" > "$TMP_FILE"
             else
-                # Wenn extends nicht vorhanden ist, füge extends und content-Block hinzu
                 echo "{% extends 'base.html' %}" > "$TMP_FILE"
                 echo "" >> "$TMP_FILE"
                 echo "{% block content %}" >> "$TMP_FILE"
                 cat "$LOGIN_TEMPLATE" >> "$TMP_FILE"
                 echo "{% endblock %}" >> "$TMP_FILE"
             fi
-            
             mv "$TMP_FILE" "$LOGIN_TEMPLATE"
             chown $APP_USER:$APP_GROUP "$LOGIN_TEMPLATE"
             chmod 644 "$LOGIN_TEMPLATE"
-            
             print_message "content-Block zu login.html hinzugefügt."
         fi
     else
