@@ -6,7 +6,8 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.urandom(24)
+app.config['SECRET_KEY'] = 'd1e5ecr3t3s4mb4shareme2025!'
+# Wähle für Produktion einen eigenen, langen, zufälligen Wert!
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
