@@ -245,14 +245,25 @@ $APP_USER ALL=(root) NOPASSWD: $INSTALL_DIR/add_samba_user.sh
 EOF
 chmod 440 /etc/sudoers.d/shareme || { print_error "Fehler beim Setzen der Berechtigungen für die Sudoers-Datei."; exit 1; }
 
-# 11.5 Hilfsskript für Samba-User anlegen
-if [ -f "./add_samba_user.sh" ]; then
-    print_message "Kopiere add_samba_user.sh ins Installationsverzeichnis..."
-    cp ./add_samba_user.sh "$INSTALL_DIR/add_samba_user.sh"
-    chown $APP_USER:$APP_GROUP "$INSTALL_DIR/add_samba_user.sh"
-    chmod 750 "$INSTALL_DIR/add_samba_user.sh"
+# 11.5 Hilfsskript für Samba-User anlegen (immer relativ zum Skriptverzeichnis)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SOURCE_SCRIPT="$SCRIPT_DIR/add_samba_user.sh"
+TARGET_SCRIPT="$INSTALL_DIR/add_samba_user.sh"
+if [ -f "$SOURCE_SCRIPT" ]; then
+    print_message "Kopiere add_samba_user.sh aus $SOURCE_SCRIPT nach $TARGET_SCRIPT ..."
+    cp "$SOURCE_SCRIPT" "$TARGET_SCRIPT"
+    chown $APP_USER:$APP_GROUP "$TARGET_SCRIPT"
+    chmod 750 "$TARGET_SCRIPT"
 else
-    print_warning "add_samba_user.sh nicht gefunden, bitte manuell kopieren!"
+    print_warning "add_samba_user.sh nicht gefunden im Skriptverzeichnis ($SOURCE_SCRIPT), bitte manuell kopieren!"
+fi
+
+# Sudoers-Eintrag für add_samba_user.sh automatisch ergänzen
+SUDOERS_FILE="/etc/sudoers.d/shareme"
+if ! grep -q "$TARGET_SCRIPT" "$SUDOERS_FILE" 2>/dev/null; then
+    echo "$APP_USER ALL=(root) NOPASSWD: $TARGET_SCRIPT" >> "$SUDOERS_FILE"
+    chmod 440 "$SUDOERS_FILE"
+    print_message "Sudoers-Eintrag für $TARGET_SCRIPT ergänzt."
 fi
 
 # 11.6 WSGI-Datei erstellen

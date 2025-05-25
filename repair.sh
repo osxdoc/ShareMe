@@ -283,21 +283,25 @@ else
 fi
 
 print_header "10. Hilfsskript add_samba_user.sh kopieren und Berechtigungen setzen"
-SOURCE_SCRIPT="./add_samba_user.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SOURCE_SCRIPT="$SCRIPT_DIR/add_samba_user.sh"
 TARGET_SCRIPT="$INSTALL_DIR/add_samba_user.sh"
 if [ -f "$SOURCE_SCRIPT" ]; then
-    print_message "Kopiere add_samba_user.sh aus dem Repository nach $TARGET_SCRIPT ..."
-    cp -v "$SOURCE_SCRIPT" "$TARGET_SCRIPT"
+    print_message "Kopiere add_samba_user.sh aus $SOURCE_SCRIPT nach $TARGET_SCRIPT ..."
+    cp "$SOURCE_SCRIPT" "$TARGET_SCRIPT"
     chown $APP_USER:$APP_GROUP "$TARGET_SCRIPT"
     chmod 750 "$TARGET_SCRIPT"
     print_message "add_samba_user.sh wurde erfolgreich kopiert und Berechtigungen gesetzt."
 else
-    print_warning "Quell-add_samba_user.sh nicht gefunden: $SOURCE_SCRIPT"
+    print_warning "add_samba_user.sh nicht gefunden im Skriptverzeichnis ($SOURCE_SCRIPT), bitte manuell kopieren!"
 fi
 
-# Prüfe, ob das Skript im Sudoers-Eintrag steht
-if ! grep -q "$TARGET_SCRIPT" /etc/sudoers.d/shareme 2>/dev/null; then
-    print_warning "Das Skript $TARGET_SCRIPT ist NICHT in /etc/sudoers.d/shareme eingetragen! Bitte ergänzen, damit die User-Anlage funktioniert."
+# Sudoers-Eintrag für add_samba_user.sh automatisch ergänzen
+SUDOERS_FILE="/etc/sudoers.d/shareme"
+if ! grep -q "$TARGET_SCRIPT" "$SUDOERS_FILE" 2>/dev/null; then
+    echo "$APP_USER ALL=(root) NOPASSWD: $TARGET_SCRIPT" >> "$SUDOERS_FILE"
+    chmod 440 "$SUDOERS_FILE"
+    print_message "Sudoers-Eintrag für $TARGET_SCRIPT ergänzt."
 fi
 
 print_header "11. Repository-Dateien nach /opt/shareme kopieren (app.py & Templates)"
