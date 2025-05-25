@@ -90,7 +90,9 @@
                 {% endif %}
                 {% endwith %}
                 
-                {% block content %}{% endblock %}
+                <div id="authenticated-content">
+                    {% block content %}{% endblock %}
+                </div>
             </main>
         </div>
     </div>
@@ -108,7 +110,9 @@
         {% endif %}
         {% endwith %}
         
-        {% block content %}{% endblock %}
+        <div id="unauthenticated-content">
+            {% block unauthenticated_content %}{% endblock %}
+        </div>
     </main>
     {% endif %}
 

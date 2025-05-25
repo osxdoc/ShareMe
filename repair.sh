@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# ShareMe - Umfassendes Reparaturskript
-# Dieses Skript behebt alle bekannten Probleme mit der ShareMe-Installation
+# ShareMe - Reparaturskript
+# Dieses Skript behebt bekannte Probleme mit der ShareMe-Installation
 
 # Farbdefinitionen
 RED='\033[0;31m'
@@ -31,6 +31,8 @@ if [ "$EUID" -ne 0 ]; then
     print_error "Dieses Skript muss mit Root-Rechten ausgeführt werden (sudo)."
     exit 1
 fi
+
+print_message "ShareMe Reparatur-Tool - Behebt alle bekannten Probleme mit der Installation"
 
 # Variablen
 SERVICE_NAME="shareme"
@@ -128,28 +130,163 @@ systemctl daemon-reload
 systemctl restart $SERVICE_NAME
 print_message "ShareMe-Dienst wurde neu gestartet."
 
-print_header "7. Firewall-Regel prüfen"
+print_header "7. Template-Dateien korrigieren"
+TEMPLATES_DIR="$INSTALL_DIR/templates"
+
+# Überprüfen, ob das Templates-Verzeichnis existiert
+if [ ! -d "$TEMPLATES_DIR" ]; then
+    print_warning "Templates-Verzeichnis nicht gefunden: $TEMPLATES_DIR"
+else
+    # Sichern der aktuellen Template-Dateien
+    print_message "Sichere aktuelle Template-Dateien..."
+    mkdir -p "$INSTALL_DIR/templates_backup"
+    cp -r "$TEMPLATES_DIR"/* "$INSTALL_DIR/templates_backup/"
+    print_message "Template-Dateien wurden gesichert in $INSTALL_DIR/templates_backup/"
+
+    # Überprüfen und Korrigieren der base.html
+    BASE_TEMPLATE="$TEMPLATES_DIR/base.html"
+    if [ -f "$BASE_TEMPLATE" ]; then
+        print_message "Überprüfe base.html..."
+        
+        # Zählen, wie oft der content-Block definiert ist
+        CONTENT_COUNT=$(grep -c "{% block content %}" "$BASE_TEMPLATE")
+        
+        if [ "$CONTENT_COUNT" -gt 1 ]; then
+            print_message "Der content-Block ist $CONTENT_COUNT mal in base.html definiert. Korrigiere..."
+            
+            # Erstelle eine temporäre Datei
+            TMP_FILE=$(mktemp)
+            
+            # Finde die erste Instanz des content-Blocks und behalte sie bei
+            # Entferne alle weiteren Instanzen
+            awk '
+            BEGIN { found = 0 }
+            /{% block content %}/ {
+                if (found == 0) {
+                    found = 1;
+                    print;
+                } else {
+                    next;
+                }
+                next;
+            }
+            /{% endblock %}/ {
+                if (found == 1) {
+                    print;
+                    found = 0;
+                } else {
+                    print;
+                }
+                next;
+            }
+            { print }
+            ' "$BASE_TEMPLATE" > "$TMP_FILE"
+            
+            # Ersetze die Originaldatei
+            mv "$TMP_FILE" "$BASE_TEMPLATE"
+            chown $APP_USER:$APP_GROUP "$BASE_TEMPLATE"
+            chmod 644 "$BASE_TEMPLATE"
+            
+            print_message "base.html wurde korrigiert."
+        else
+            print_message "base.html scheint in Ordnung zu sein."
+        fi
+    else
+        print_warning "base.html nicht gefunden."
+    fi
+
+    # Überprüfen und Korrigieren der login.html
+    LOGIN_TEMPLATE="$TEMPLATES_DIR/login.html"
+    if [ -f "$LOGIN_TEMPLATE" ]; then
+        print_message "Überprüfe login.html..."
+        
+        # Überprüfen, ob login.html einen content-Block definiert
+        if grep -q "{% block content %}" "$LOGIN_TEMPLATE"; then
+            print_message "login.html enthält einen content-Block."
+            
+            # Überprüfen, ob login.html base.html erweitert
+            if grep -q "{% extends 'base.html' %}" "$LOGIN_TEMPLATE"; then
+                print_message "login.html erweitert base.html korrekt."
+            else
+                print_warning "login.html erweitert base.html nicht. Füge extends-Anweisung hinzu..."
+                
+                # Füge extends-Anweisung am Anfang der Datei hinzu
+                TMP_FILE=$(mktemp)
+                echo "{% extends 'base.html' %}" > "$TMP_FILE"
+                cat "$LOGIN_TEMPLATE" >> "$TMP_FILE"
+                mv "$TMP_FILE" "$LOGIN_TEMPLATE"
+                chown $APP_USER:$APP_GROUP "$LOGIN_TEMPLATE"
+                chmod 644 "$LOGIN_TEMPLATE"
+                
+                print_message "extends-Anweisung zu login.html hinzugefügt."
+            fi
+        else
+            print_warning "login.html enthält keinen content-Block. Füge content-Block hinzu..."
+            
+            # Füge content-Block hinzu
+            TMP_FILE=$(mktemp)
+            
+            if grep -q "{% extends 'base.html' %}" "$LOGIN_TEMPLATE"; then
+                # Wenn extends vorhanden ist, füge content-Block nach extends hinzu
+                awk '
+                /{% extends .base.html. %}/ {
+                    print;
+                    print "";
+                    print "{% block content %}";
+                    next;
+                }
+                { print }
+                END {
+                    print "{% endblock %}";
+                }
+                ' "$LOGIN_TEMPLATE" > "$TMP_FILE"
+            else
+                # Wenn extends nicht vorhanden ist, füge extends und content-Block hinzu
+                echo "{% extends 'base.html' %}" > "$TMP_FILE"
+                echo "" >> "$TMP_FILE"
+                echo "{% block content %}" >> "$TMP_FILE"
+                cat "$LOGIN_TEMPLATE" >> "$TMP_FILE"
+                echo "{% endblock %}" >> "$TMP_FILE"
+            fi
+            
+            mv "$TMP_FILE" "$LOGIN_TEMPLATE"
+            chown $APP_USER:$APP_GROUP "$LOGIN_TEMPLATE"
+            chmod 644 "$LOGIN_TEMPLATE"
+            
+            print_message "content-Block zu login.html hinzugefügt."
+        fi
+    else
+        print_warning "login.html nicht gefunden."
+    fi
+fi
+
+print_header "8. Firewall-Regel prüfen"
 # Port aus der Konfiguration ermitteln
 PORT=$(grep -oP 'ExecStart=.*-b\s+0.0.0.0:\K[0-9]+' /etc/systemd/system/$SERVICE_NAME.service || echo "5000")
 
-# Firewall-Regel hinzufügen, falls nötig
-if command -v ufw &> /dev/null && ufw status | grep -q "active"; then
-    print_message "Füge Firewall-Regel für Port $PORT hinzu..."
-    ufw allow $PORT/tcp
-    print_message "Firewall-Regel wurde hinzugefügt."
+# Überprüfen, ob der Port in der Firewall geöffnet ist
+if command -v ufw &>/dev/null; then
+    if ! ufw status | grep -q "$PORT/tcp"; then
+        print_message "Öffne Port $PORT in der Firewall..."
+        ufw allow $PORT/tcp
+        print_message "Port $PORT wurde in der Firewall geöffnet."
+    else
+        print_message "Port $PORT ist bereits in der Firewall geöffnet."
+    fi
+else
+    print_warning "ufw ist nicht installiert. Bitte stellen Sie sicher, dass der Port $PORT in Ihrer Firewall geöffnet ist."
 fi
 
-print_header "6. Status überprüfen"
+# Anzeigen der IP-Adresse und des Ports
+IP_ADDRESS=$(hostname -I | awk '{print $1}')
+print_message "ShareMe ist jetzt verfügbar unter: http://$IP_ADDRESS:$PORT"
+print_message "Standard-Anmeldedaten: admin / admin"
+
+print_header "9. Status überprüfen"
 sleep 5
 
 if systemctl is-active $SERVICE_NAME &>/dev/null; then
     print_message "Der ShareMe-Dienst läuft jetzt."
-    
-    # IP-Adresse ermitteln
-    IP_ADDRESS=$(hostname -I | awk '{print $1}')
-    
-    print_message "ShareMe ist jetzt verfügbar unter: http://$IP_ADDRESS:$PORT"
-    print_message "Standard-Anmeldedaten: admin / admin"
 else
     print_error "Der ShareMe-Dienst konnte nicht gestartet werden."
     print_message "Hier sind die letzten Zeilen der Logs:"
