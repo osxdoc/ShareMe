@@ -80,12 +80,55 @@ chown -R $APP_USER:$APP_GROUP $INSTALL_DIR
 chmod -R 755 $INSTALL_DIR
 print_message "Berechtigungen wurden korrigiert."
 
-print_header "4. Dienst neu starten"
+print_header "4. WSGI-Datei erstellen"
+cat > $INSTALL_DIR/wsgi.py << EOF
+from app import app
+
+if __name__ == "__main__":
+    app.run()
+EOF
+chown $APP_USER:$APP_GROUP $INSTALL_DIR/wsgi.py
+chmod 755 $INSTALL_DIR/wsgi.py
+print_message "WSGI-Datei wurde erstellt."
+
+print_header "5. Service-Datei korrigieren"
+SERVICE_FILE="/etc/systemd/system/$SERVICE_NAME.service"
+
+# Sichern der aktuellen Service-Datei
+if [ -f "$SERVICE_FILE" ]; then
+    cp "$SERVICE_FILE" "${SERVICE_FILE}.backup"
+    print_message "Aktuelle Service-Datei wurde gesichert als ${SERVICE_FILE}.backup"
+fi
+
+# Ermitteln des aktuell konfigurierten Ports
+PORT=$(grep -oP 'ExecStart=.*-b\s+0.0.0.0:\K[0-9]+' "$SERVICE_FILE" 2>/dev/null || echo "5000")
+
+# Erstellen einer neuen Service-Datei mit korrektem Pfad
+cat > "$SERVICE_FILE" << EOF
+[Unit]
+Description=ShareMe Samba Web Manager
+After=network.target
+
+[Service]
+User=$APP_USER
+Group=$APP_GROUP
+WorkingDirectory=$INSTALL_DIR
+Environment="PATH=$INSTALL_DIR/venv/bin"
+ExecStart=$INSTALL_DIR/venv/bin/gunicorn --chdir $INSTALL_DIR -w 4 -b 0.0.0.0:$PORT wsgi:app
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+print_message "Service-Datei wurde korrigiert."
+
+print_header "6. Dienst neu starten"
 systemctl daemon-reload
 systemctl restart $SERVICE_NAME
 print_message "ShareMe-Dienst wurde neu gestartet."
 
-print_header "5. Firewall-Regel prüfen"
+print_header "7. Firewall-Regel prüfen"
 # Port aus der Konfiguration ermitteln
 PORT=$(grep -oP 'ExecStart=.*-b\s+0.0.0.0:\K[0-9]+' /etc/systemd/system/$SERVICE_NAME.service || echo "5000")
 

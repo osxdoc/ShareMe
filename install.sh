@@ -239,6 +239,17 @@ $APP_USER ALL=(root) NOPASSWD: /usr/bin/smbpasswd
 EOF
 chmod 440 /etc/sudoers.d/shareme || { print_error "Fehler beim Setzen der Berechtigungen für die Sudoers-Datei."; exit 1; }
 
+# 11.5 WSGI-Datei erstellen
+print_message "Erstelle WSGI-Datei..."
+cat > $INSTALL_DIR/wsgi.py << EOF
+from app import app
+
+if __name__ == "__main__":
+    app.run()
+EOF
+chown $APP_USER:$APP_GROUP $INSTALL_DIR/wsgi.py
+chmod 755 $INSTALL_DIR/wsgi.py
+
 # 12. Systemd-Service erstellen
 print_message "Erstelle Systemd-Service..."
 cat > /etc/systemd/system/$SERVICE_NAME.service << EOF
@@ -251,7 +262,7 @@ User=$APP_USER
 Group=$APP_GROUP
 WorkingDirectory=$INSTALL_DIR
 Environment="PATH=$INSTALL_DIR/venv/bin"
-ExecStart=$INSTALL_DIR/venv/bin/python -m gunicorn -w 4 -b 0.0.0.0:$APP_PORT app:app
+ExecStart=$INSTALL_DIR/venv/bin/gunicorn --chdir $INSTALL_DIR -w 4 -b 0.0.0.0:$APP_PORT wsgi:app
 Restart=always
 
 [Install]
