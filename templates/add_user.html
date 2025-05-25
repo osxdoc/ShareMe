@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Neuer Benutzer - ShareMe{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Neuen Benutzer erstellen</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Benutzername</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                        <div class="form-text">Der Benutzername für die Anmeldung am Samba-Server.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Passwort</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                        <div class="form-text">Das Passwort für die Anmeldung am Samba-Server.</div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('users_list') }}" class="btn btn-secondary">Abbrechen</a>
+                        <button type="submit" class="btn btn-primary">Benutzer erstellen</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Hilfe</h5>
+            </div>
+            <div class="card-body">
+                <p>Ein Samba-Benutzer wird für die Authentifizierung beim Zugriff auf Freigaben verwendet.</p>
+                <p>Wichtige Hinweise:</p>
+                <ul>
+                    <li>Der Benutzername sollte keine Sonderzeichen enthalten.</li>
+                    <li>Wählen Sie ein sicheres Passwort.</li>
+                    <li>Der Benutzer muss auch als System-Benutzer existieren.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

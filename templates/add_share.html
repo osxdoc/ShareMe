@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Neue Freigabe - ShareMe{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Neue Freigabe erstellen</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name der Freigabe</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                        <div class="form-text">Der Name, unter dem die Freigabe im Netzwerk erscheint.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="path" class="form-label">Pfad</label>
+                        <input type="text" class="form-control" id="path" name="path" required>
+                        <div class="form-text">Der absolute Pfad zum Verzeichnis, das freigegeben werden soll.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="comment" class="form-label">Beschreibung</label>
+                        <input type="text" class="form-control" id="comment" name="comment">
+                        <div class="form-text">Eine optionale Beschreibung der Freigabe.</div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="browseable" name="browseable" checked>
+                        <label class="form-check-label" for="browseable">Sichtbar</label>
+                        <div class="form-text">Wenn aktiviert, wird die Freigabe in der Netzwerkumgebung angezeigt.</div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="read_only" name="read_only">
+                        <label class="form-check-label" for="read_only">Schreibgeschützt</label>
+                        <div class="form-text">Wenn aktiviert, können Benutzer Dateien nur lesen, aber nicht ändern oder hinzufügen.</div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="guest_ok" name="guest_ok">
+                        <label class="form-check-label" for="guest_ok">Gastzugriff erlauben</label>
+                        <div class="form-text">Wenn aktiviert, können Benutzer ohne Anmeldung auf die Freigabe zugreifen.</div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('shares') }}" class="btn btn-secondary">Abbrechen</a>
+                        <button type="submit" class="btn btn-primary">Freigabe erstellen</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Hilfe</h5>
+            </div>
+            <div class="card-body">
+                <p>Eine Samba-Freigabe ermöglicht den Zugriff auf Dateien und Verzeichnisse über das Netzwerk.</p>
+                <p>Wichtige Hinweise:</p>
+                <ul>
+                    <li>Der Pfad muss auf dem Server existieren.</li>
+                    <li>Stellen Sie sicher, dass die Berechtigungen korrekt gesetzt sind.</li>
+                    <li>Der Name sollte keine Sonderzeichen enthalten.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

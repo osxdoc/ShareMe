@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Freigabe bearbeiten - ShareMe{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Freigabe bearbeiten: {{ share.name }}</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    <div class="mb-3">
+                        <label for="path" class="form-label">Pfad</label>
+                        <input type="text" class="form-control" id="path" name="path" value="{{ share.path }}" required>
+                        <div class="form-text">Der absolute Pfad zum Verzeichnis, das freigegeben werden soll.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="comment" class="form-label">Beschreibung</label>
+                        <input type="text" class="form-control" id="comment" name="comment" value="{{ share.comment }}">
+                        <div class="form-text">Eine optionale Beschreibung der Freigabe.</div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="browseable" name="browseable" {% if share.browseable %}checked{% endif %}>
+                        <label class="form-check-label" for="browseable">Sichtbar</label>
+                        <div class="form-text">Wenn aktiviert, wird die Freigabe in der Netzwerkumgebung angezeigt.</div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="read_only" name="read_only" {% if share.read_only %}checked{% endif %}>
+                        <label class="form-check-label" for="read_only">Schreibgeschützt</label>
+                        <div class="form-text">Wenn aktiviert, können Benutzer Dateien nur lesen, aber nicht ändern oder hinzufügen.</div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="guest_ok" name="guest_ok" {% if share.guest_ok %}checked{% endif %}>
+                        <label class="form-check-label" for="guest_ok">Gastzugriff erlauben</label>
+                        <div class="form-text">Wenn aktiviert, können Benutzer ohne Anmeldung auf die Freigabe zugreifen.</div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('shares') }}" class="btn btn-secondary">Abbrechen</a>
+                        <button type="submit" class="btn btn-primary">Änderungen speichern</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Hilfe</h5>
+            </div>
+            <div class="card-body">
+                <p>Bearbeiten Sie die Eigenschaften der Freigabe "{{ share.name }}".</p>
+                <p>Der Name der Freigabe kann nicht geändert werden. Falls Sie den Namen ändern möchten, löschen Sie diese Freigabe und erstellen Sie eine neue.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

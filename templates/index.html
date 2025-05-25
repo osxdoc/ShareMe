@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - ShareMe{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Dashboard</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Samba Status</h4>
+            </div>
+            <div class="card-body">
+                <div id="status-container">
+                    <div class="d-flex align-items-center">
+                        <div class="spinner-border text-primary me-2" role="status">
+                            <span class="visually-hidden">Laden...</span>
+                        </div>
+                        <span>Status wird abgerufen...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Schnellzugriff</h4>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <a href="{{ url_for('shares') }}" class="list-group-item list-group-item-action">
+                        Freigaben verwalten
+                    </a>
+                    <a href="{{ url_for('add_share') }}" class="list-group-item list-group-item-action">
+                        Neue Freigabe erstellen
+                    </a>
+                    <a href="{{ url_for('users_list') }}" class="list-group-item list-group-item-action">
+                        Benutzer verwalten
+                    </a>
+                    <a href="{{ url_for('add_user') }}" class="list-group-item list-group-item-action">
+                        Neuen Benutzer hinzufügen
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Function to check Samba service status
+    function checkStatus() {
+        const statusContainer = document.getElementById('status-container');
+        
+        // In a real implementation, this would make an AJAX call to a backend endpoint
+        // For now, we'll simulate a successful status check
+        setTimeout(() => {
+            statusContainer.innerHTML = `
+                <div class="alert alert-success mb-0">
+                    <strong>Samba-Dienste laufen</strong>
+                    <div>smbd: Aktiv</div>
+                    <div>nmbd: Aktiv</div>
+                </div>
+            `;
+        }, 1000);
+    }
+    
+    // Check status when page loads
+    document.addEventListener('DOMContentLoaded', checkStatus);
+</script>
+{% endblock %}
