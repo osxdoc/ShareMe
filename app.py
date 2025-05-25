@@ -244,21 +244,45 @@ def add_user():
         password = request.form.get('password')
         
         try:
-            # Add user to Samba using smbpasswd
-            process = subprocess.Popen(['/usr/bin/smbpasswd', '-a', username], 
-                                      stdin=subprocess.PIPE, 
-                                      stdout=subprocess.PIPE,
-                                      stderr=subprocess.PIPE,
-                                      text=True)
-            
-            # Send password twice (for confirmation)
-            out, err = process.communicate(f"{password}\n{password}\n")
-            
+            # Prüfe, ob der User schon existiert (pdbedit -L gibt alle Samba-User aus)
+            check_user = subprocess.run(['pdbedit', '-L'], capture_output=True, text=True)
+            if check_user.returncode == 0 and any(line.startswith(f"{username}:") for line in check_user.stdout.splitlines()):
+                flash(f'User {username} already exists as Samba user.')
+                return render_template('add_user.html')
+
+            # Optional: Username validieren
+            if not username or ' ' in username or len(username) < 3:
+                flash('Invalid username. Must be at least 3 characters and contain no spaces.')
+                return render_template('add_user.html')
+            if not password or len(password) < 4:
+                flash('Password too short. Must be at least 4 characters.')
+                return render_template('add_user.html')
+
+            # Versuche User per Hilfsskript mit sudo anzulegen (empfohlen, falls eingerichtet)
+            script_path = os.path.join(os.path.dirname(__file__), 'add_samba_user.sh')
+            if os.path.exists(script_path):
+                process = subprocess.Popen(['sudo', script_path, username],
+                                          stdin=subprocess.PIPE,
+                                          stdout=subprocess.PIPE,
+                                          stderr=subprocess.PIPE,
+                                          text=True)
+                out, err = process.communicate(f"{password}\n{password}\n")
+            else:
+                # Fallback: klassisch per smbpasswd (funktioniert nur mit root-Rechten)
+                process = subprocess.Popen(['/usr/bin/smbpasswd', '-a', username],
+                                          stdin=subprocess.PIPE,
+                                          stdout=subprocess.PIPE,
+                                          stderr=subprocess.PIPE,
+                                          text=True)
+                out, err = process.communicate(f"{password}\n{password}\n")
+
             if process.returncode == 0:
                 flash(f'User {username} added successfully')
                 return redirect(url_for('users_list'))
             else:
-                flash(f'Error adding user: {err.strip()} (code {process.returncode})')
+                flash(f'Error adding user: (code {process.returncode})\nSTDOUT: {out.strip()}\nSTDERR: {err.strip()}')
+                if process.returncode == 1:
+                    flash('Hinweis: Wahrscheinlich fehlen Root-Rechte oder sudo-Konfiguration für Samba-User-Anlage. Bitte prüfe die Server-Konfiguration!')
         except Exception as e:
             flash(f'Error adding user: {str(e)}')
     

@@ -241,10 +241,21 @@ $APP_USER ALL=(root) NOPASSWD: /usr/sbin/service smbd restart
 $APP_USER ALL=(root) NOPASSWD: /usr/sbin/service nmbd restart
 $APP_USER ALL=(root) NOPASSWD: /usr/bin/pdbedit
 $APP_USER ALL=(root) NOPASSWD: /usr/bin/smbpasswd
+$APP_USER ALL=(root) NOPASSWD: $INSTALL_DIR/add_samba_user.sh
 EOF
 chmod 440 /etc/sudoers.d/shareme || { print_error "Fehler beim Setzen der Berechtigungen für die Sudoers-Datei."; exit 1; }
 
-# 11.5 WSGI-Datei erstellen
+# 11.5 Hilfsskript für Samba-User anlegen
+if [ -f "./add_samba_user.sh" ]; then
+    print_message "Kopiere add_samba_user.sh ins Installationsverzeichnis..."
+    cp ./add_samba_user.sh "$INSTALL_DIR/add_samba_user.sh"
+    chown $APP_USER:$APP_GROUP "$INSTALL_DIR/add_samba_user.sh"
+    chmod 750 "$INSTALL_DIR/add_samba_user.sh"
+else
+    print_warning "add_samba_user.sh nicht gefunden, bitte manuell kopieren!"
+fi
+
+# 11.6 WSGI-Datei erstellen
 print_message "Erstelle WSGI-Datei..."
 cat > $INSTALL_DIR/wsgi.py << EOF
 from app import app

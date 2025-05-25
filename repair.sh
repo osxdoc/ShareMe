@@ -282,7 +282,25 @@ else
     journalctl -u $SERVICE_NAME -n 20 --no-pager
 fi
 
-print_header "10. Repository-Dateien nach /opt/shareme kopieren (app.py & Templates)"
+print_header "10. Hilfsskript add_samba_user.sh kopieren und Berechtigungen setzen"
+SOURCE_SCRIPT="./add_samba_user.sh"
+TARGET_SCRIPT="$INSTALL_DIR/add_samba_user.sh"
+if [ -f "$SOURCE_SCRIPT" ]; then
+    print_message "Kopiere add_samba_user.sh aus dem Repository nach $TARGET_SCRIPT ..."
+    cp -v "$SOURCE_SCRIPT" "$TARGET_SCRIPT"
+    chown $APP_USER:$APP_GROUP "$TARGET_SCRIPT"
+    chmod 750 "$TARGET_SCRIPT"
+    print_message "add_samba_user.sh wurde erfolgreich kopiert und Berechtigungen gesetzt."
+else
+    print_warning "Quell-add_samba_user.sh nicht gefunden: $SOURCE_SCRIPT"
+fi
+
+# Prüfe, ob das Skript im Sudoers-Eintrag steht
+if ! grep -q "$TARGET_SCRIPT" /etc/sudoers.d/shareme 2>/dev/null; then
+    print_warning "Das Skript $TARGET_SCRIPT ist NICHT in /etc/sudoers.d/shareme eingetragen! Bitte ergänzen, damit die User-Anlage funktioniert."
+fi
+
+print_header "11. Repository-Dateien nach /opt/shareme kopieren (app.py & Templates)"
 SOURCE_TEMPLATES="./templates"
 TARGET_TEMPLATES="$INSTALL_DIR/templates"
 SOURCE_APP="./app.py"
