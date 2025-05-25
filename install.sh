@@ -104,7 +104,7 @@ fi
 # 2. Installieren der benötigten Pakete
 print_message "Installiere benötigte Pakete..."
 # Prüfen, ob die Pakete bereits installiert sind
-PACKAGES="python3 python3-pip python3-venv git samba samba-common-bin"
+PACKAGES="python3 python3-pip python3-venv git samba samba-common-bin libldap2-dev libsasl2-dev python3-dev"
 if [ "$USE_NGINX" = true ]; then
     PACKAGES="$PACKAGES nginx"
 fi
