@@ -282,6 +282,21 @@ else
     journalctl -u $SERVICE_NAME -n 20 --no-pager
 fi
 
+print_header "10. Geprüfte Templates aus dem Repository kopieren"
+SOURCE_TEMPLATES="./templates"
+TARGET_TEMPLATES="$INSTALL_DIR/templates"
+
+if [ -d "$SOURCE_TEMPLATES" ]; then
+    print_message "Kopiere base.html und login.html aus dem Repository..."
+    cp -v "$SOURCE_TEMPLATES/base.html" "$TARGET_TEMPLATES/"
+    cp -v "$SOURCE_TEMPLATES/login.html" "$TARGET_TEMPLATES/"
+    chown $APP_USER:$APP_GROUP "$TARGET_TEMPLATES/base.html" "$TARGET_TEMPLATES/login.html"
+    chmod 644 "$TARGET_TEMPLATES/base.html" "$TARGET_TEMPLATES/login.html"
+    print_message "Templates base.html und login.html wurden erfolgreich überschrieben und Berechtigungen gesetzt."
+else
+    print_warning "Quell-Templates nicht gefunden: $SOURCE_TEMPLATES"
+fi
+
 print_header "Reparatur abgeschlossen"
 print_message "Wenn die Anwendung immer noch nicht funktioniert, überprüfen Sie die vollständigen Logs mit:"
 print_message "sudo journalctl -u $SERVICE_NAME"

@@ -211,21 +211,21 @@ def users_list():
         
         # Parse the output to extract user information
         samba_users = []
-        current_user = {}
+        current_samba_user = {}
         
         for line in output.splitlines():
             line = line.strip()
             if line.startswith('Unix username:'):
-                if current_user:
-                    samba_users.append(current_user)
-                current_user = {'username': line.split(':', 1)[1].strip()}
+                if current_samba_user:
+                    samba_users.append(current_samba_user)
+                current_samba_user = {'username': line.split(':', 1)[1].strip()}
             elif line.startswith('Account Flags:'):
-                current_user['flags'] = line.split(':', 1)[1].strip()
+                current_samba_user['flags'] = line.split(':', 1)[1].strip()
             elif line.startswith('User SID:'):
-                current_user['sid'] = line.split(':', 1)[1].strip()
+                current_samba_user['sid'] = line.split(':', 1)[1].strip()
         
-        if current_user:
-            samba_users.append(current_user)
+        if current_samba_user:
+            samba_users.append(current_samba_user)
         
         return render_template('users.html', users=samba_users)
     except Exception as e:
