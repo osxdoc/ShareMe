@@ -252,13 +252,13 @@ def add_user():
                                       text=True)
             
             # Send password twice (for confirmation)
-            process.communicate(f"{password}\n{password}\n")
+            out, err = process.communicate(f"{password}\n{password}\n")
             
             if process.returncode == 0:
                 flash(f'User {username} added successfully')
                 return redirect(url_for('users_list'))
             else:
-                flash(f'Error adding user: process returned {process.returncode}')
+                flash(f'Error adding user: {err.strip()} (code {process.returncode})')
         except Exception as e:
             flash(f'Error adding user: {str(e)}')
     
